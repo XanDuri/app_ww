@@ -1,67 +1,52 @@
-from .models import Person
-from lab.serializers import PersonSerializer
+# DRF Serializer Test
+
+## OsobaSerializer Test
+
+```python
+from lab.models import Osoba, Stanowisko
+from lab.serializers import OsobaSerializer
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
+import io
 
-# 1. stworzenie nowej instancji klasy Person (opcjonalne, mamy panel admin do tego również)
-person = Person(name='Adam', miesiac_dodania=1)
-# utrwalenie w bazie danych
-person.save()
+# 1. Create a new instance of Osoba
+stanowisko = Stanowisko.objects.create(nazwa='Developer', opis='Software Developer')
+osoba = Osoba(imie='Adam', nazwisko='Nowak', plec=1, stanowisko=stanowisko)
 
-# 2. inicjalizacja serializera
-serializer = PersonSerializer(person)
+# Save the instance to the database
+osoba.save()
+
+# 2. Initialize serializer
+serializer = OsobaSerializer(osoba)
 serializer.data
-# output - natywny typ danych Pythona (dictionary)
-{'id': 16, 'name': 'Adam', 'shirt_size': ('S', 'Small'), 'miesiac_dodania': 1, 'team': None}
+# Expected output - Python dictionary
+# {'id': 1, 'imie': 'Adam', 'nazwisko': 'Nowak', 'plec': 1, 'stanowisko': 1, 'data_dodania': '2024-10-23'}
 
-# warto również zwrócić uwagę na wartość zmiennej shirt_size, która przyjęła wartość jako krotkę (która została zamieniona na typ str), gdyż w modelu został domyślny wybór określony jako SHIRT_SIZE[0] co jest pierwszą krotką dla tej kolekcji o wartości ('S', 'Small')
-# zamiana na SHIRT_SIZE[0][0] wskazałaby wartość 'S' i powinna również działać poprawnie dla modelu Person
-# output po zmianach w modelu
-# {'id': 19, 'name': 'Genowefa', 'shirt_size': 'S', 'miesiac_dodania': 1, 'team': None}
-
-# 3. serializacja danych do formatu JSON
+# 3. Serialize the data to JSON
 content = JSONRenderer().render(serializer.data)
 content
 
-# output
-b'{"id":16,"name":"Adam","shirt_size":"S","miesiac_dodania":1,"team":null}'
+# Expected output
+# b'{"id":1,"imie":"Adam","nazwisko":"Nowak","plec":1,"stanowisko":1,"data_dodania":"2024-10-23"}'
 
-# w takiej formie możemy przesłać obiekt (lub cały graf obiektów) przez sieć i po "drugiej stronie" dokonać deserializacji odtwarzając graf i stan obiektów
-
-import io
-
+# 4. Deserialize the JSON content
 stream = io.BytesIO(content)
 data = JSONParser().parse(stream)
 
-# tworzymy obiekt dedykowanego serializera i przekazujemy sparsowane dane
-deserializer = PersonSerializer(data=data)
-# sprawdzamy, czy dane przechodzą walidację (aktualnie tylko domyślna walidacja, dedykowana zostanie przedstawiona na kolejnych zajęciach)
+# Create serializer with deserialized data
+deserializer = OsobaSerializer(data=data)
+
+# 5. Check if the deserialized data is valid
 deserializer.is_valid()
-# output
-# False
+# Expected output: True
 
-# to oznacza pojawienie się błędu walidacji
-deserializer.errors
-# output
-# {'team': [ErrorDetail(string='Pole nie może mieć wartości null.', code='null')]}
-
-# w samym modelu określone są dwa atrybuty null=True, blank=True, ale jak widać serializer nie bierze tego pod uwagę
-# musimy w klasie PersonSerializer zmodyfikować wartość dla pola team
-# dodając atrybut allow_null=True i uruchomić całe testowanie raz jeszcze
-
-# aby upewnić się w jaki sposób wyglądają pola wczytanego serializera/deserializera, możemy wywołać zmienną deserializer.fields, aby wyświetlić te dane
-deserializer.fields
-
-# lub
-repr(deserializer)
-
-# po powyższych zmianach walidacja powinna już się powieść
-# możemy sprawdzić jak wyglądają dane obiektów po deserializacji i walidacji
+# 6. Check the deserialized fields
 deserializer.validated_data
-# output
-# OrderedDict([('name', 'Adam'), ('shirt_size', 'S'), ('miesiac_dodania', 1), ('team', None)])
+# Expected output
+# OrderedDict([('imie', 'Adam'), ('nazwisko', 'Nowak'), ('plec', 1), ('stanowisko', 1), ('data_dodania', '2024-10-23')])
 
-# oraz utrwalamy dane
+# 7. Save the deserialized data
 deserializer.save()
-# sprawdzamy m.in. przyznane id
+
+# Check serialized data after saving
 deserializer.data
