@@ -13,11 +13,11 @@ class OsobaAdmin(admin.ModelAdmin):
 
     @admin.display(description="Dodana")
     def data_dodania(self, instance):
-        return instance
+        return instance.data_dodania
 
     @admin.display(description="Stanowisko")
     def stanowisko(self, instance):
-        return f"{instance.stanowisko}+{instance.id}"
+        return f"{instance.stanowisko.nazwa} ({instance.stanowisko.id})"
 
 # Dodanie 2 nowych modeli do panelu administratora
 admin.site.register(Osoba, OsobaAdmin)
