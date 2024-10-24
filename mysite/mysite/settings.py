@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'polls',
     'lab',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
